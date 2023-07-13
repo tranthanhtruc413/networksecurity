@@ -33,23 +33,23 @@
 						<div class="input-group-prepend">
 							<span class="input-group-text"><i class="fas fa-user"></i></span>
 						</div>
-						<input type="text" class="form-control" placeholder="Username">
+						<input type="text" class="form-control" name="Username" placeholder="Username">
 						
 					</div>
 					<div class="input-group form-group">
 						<div class="input-group-prepend">
 							<span class="input-group-text"><i class="fas fa-envelope"></i></span>
 						</div>
-						<input type="email" class="form-control" placeholder="Email">
+						<input type="email" class="form-control" name="Email" placeholder="Email">
 					</div>
 					<div class="input-group form-group">
 						<div class="input-group-prepend">
 							<span class="input-group-text"><i class="fas fa-key"></i></span>
 						</div>
-						<input type="password" class="form-control" placeholder="Password">
+						<input type="password" class="form-control" name="Password" placeholder="Password">
 					</div>
 					<div class="form-group">
-						<input type="submit" value="Register" class="btn float-right login_btn">
+						<input type="submit" value="Register" name="Register" class="btn float-right login_btn">
 					</div>
 				</form>
 			</div>
@@ -63,3 +63,76 @@
 </div>
     </form>
 </body>
+<?php
+function getName($n) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $randomString = '';
+ 
+    for ($i = 0; $i < $n; $i++) {
+        $index = rand(0, strlen($characters) - 1);
+        $randomString .= $characters[$index];
+    }
+ 
+    return $randomString;
+}
+if(isset($_POST['Register'])) 
+{
+	$conn = mysqli_connect("localhost","root","","netsec");
+	if ($conn->connect_error) 
+	{
+		die("Connection failed: " . $conn->connect_error);
+	}
+	$n=5;
+	$userid = getName($n);
+	while (true) 
+	{
+		$sql = "SELECT * FROM tbl_users WHERE userid='$userid'";
+		$result = $conn->query($sql);
+		if ($result->num_rows > 0) 
+		{
+			$userid = getName($n);
+		}
+		else
+		{
+			break;
+		}
+	}
+	$error = 0;
+	$username = $_POST['Username'];
+	$email = $_POST['Email'];
+	$password = $_POST['Password'];
+	$hash = hash('sha256',$password);	
+	if($username == "" || $email == "" || $password == "")
+	{
+		echo "<h5 style='text-align:center;color:white'>Please fill all the fields</h5>";
+		$error = 1;
+	}
+	$sql = "SELECT * FROM tbl_users WHERE username='$username'";
+	$result = $conn->query($sql);
+	if ($result->num_rows > 0) 
+		{
+			echo "<h5 style='text-align:center;color:white'>Username already exists</h5>";
+			$error = 1;
+		}
+	if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		if ($error == 0)
+		{
+			echo "<h5 style='text-align:center;color:white'>Invalid email format</h5>";
+			$error = 1;
+		}
+	}
+	if ($error == 0)
+	{
+		$sql = "INSERT INTO tbl_users (userid, username, email, password) VALUES ('$userid', '$username', '$email', '$hash')";
+		if ($conn->query($sql) === TRUE) 
+		{
+			header("Location: login.php");
+			echo "<h5 style='text-align:center;color:white'>Registration Successful</h5>";
+		} 
+		else 
+		{
+			echo "Error: " . $sql . "<br>" . $conn->error;
+		}
+	}
+}
+?>

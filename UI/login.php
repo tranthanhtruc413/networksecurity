@@ -7,11 +7,20 @@ if (isset($_POST['Login']))
 {
     $username = $_POST['username'];
     $password = $_POST['password'];
-    if ($username == 'admin' && $password == 'admin')
-    {
-        $_SESSION['Login'] = $username;
+	$hash = hash('sha256',$password);
+	$conn = mysqli_connect("localhost","root","","netsec");
+	if ($conn->connect_error) 
+	{
+		die("Connection failed: " . $conn->connect_error);
+	}
+	$sql = "SELECT * FROM tbl_users WHERE username = '$username' AND password = '$hash'";
+	$res = mysqli_query($conn,$sql);
+	$count = mysqli_num_rows($res);
+	if ($count) 
+	{
+		$_SESSION['Login'] = $username;
         header("Location: option.php");
-    }
+	}
     else
     {
         $error = 'Invalid username or password';
