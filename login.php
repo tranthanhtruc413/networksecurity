@@ -15,6 +15,8 @@ if (isset($_POST['Login']))
 	}
 	$sql = "SELECT * FROM tbl_users WHERE username = '$username' AND password = '$hash'";
 	$res = mysqli_query($conn,$sql);
+	$row = mysqli_fetch_array($res,MYSQLI_ASSOC);
+	$userid = $row['userid'];
 	$count = mysqli_num_rows($res);
 	if ($count) 
 	{
