@@ -1,3 +1,3 @@
 <?php
-header("Location: UI/index.php");
+header("Location: option.php");
 ?>
