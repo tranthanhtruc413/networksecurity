@@ -77,7 +77,7 @@ function getName($n) {
 }
 if(isset($_POST['Register'])) 
 {
-	$conn = mysqli_connect("localhost","root","","netsec");
+	$conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
 	if ($conn->connect_error) 
 	{
 		die("Connection failed: " . $conn->connect_error);

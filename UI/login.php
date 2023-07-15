@@ -8,7 +8,7 @@ if (isset($_POST['Login']))
     $username = $_POST['username'];
     $password = $_POST['password'];
 	$hash = hash('sha256',$password);
-	$conn = mysqli_connect("localhost","root","","netsec");
+	$conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
 	if ($conn->connect_error) 
 	{
 		die("Connection failed: " . $conn->connect_error);
