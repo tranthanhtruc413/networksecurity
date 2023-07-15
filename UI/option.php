@@ -48,7 +48,7 @@ if (isset($_POST['Upload'])) {
     header("Location: upload.php");
 }
 if (isset($_POST['Market'])) {
-    header("Location: market.php");
+    header("Location: marketUI/market.php");
 }
 if (isset($_POST['Logout'])) {
     session_destroy();
