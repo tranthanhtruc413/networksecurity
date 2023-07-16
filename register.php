@@ -103,31 +103,51 @@ if(isset($_POST['Register']))
 	$password = $_POST['Password'];
 	$hash = hash('sha256',$password);	
 	if($username == "" || $email == "" || $password == "")
-	{
-		echo "<h5 style='text-align:center;color:white'>Please fill all the fields</h5>";
+	{			
+		echo '<script language="javascript">';
+		echo 'alert("Please fill all the fields")';
+		echo '</script>';
 		$error = 1;
 	}
 	$sql = "SELECT * FROM tbl_users WHERE username='$username'";
 	$result = $conn->query($sql);
 	if ($result->num_rows > 0) 
 		{
-			echo "<h5 style='text-align:center;color:white'>Username already exists</h5>";
-			$error = 1;
+			if ($error == 0)
+			{
+				echo '<script language="javascript">';
+				echo 'alert("This username already exists")';
+				echo '</script>';
+				$error = 1;
+			}
 		}
 	if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 		if ($error == 0)
 		{
-			echo "<h5 style='text-align:center;color:white'>Invalid email format</h5>";
+			echo '<script language="javascript">';
+			echo 'alert("Invalid email format")';
+			echo '</script>';
 			$error = 1;
 		}
 	}
+	$sql = "SELECT * FROM tbl_users WHERE email='$email'";
+	$result = $conn->query($sql);
+	if ($result->num_rows > 0) 
+		{
+			if ($error == 0)
+			{
+				echo '<script language="javascript">';
+				echo 'alert("This email already exists")';
+				echo '</script>';
+				$error = 1;
+			}
+		}
 	if ($error == 0)
 	{
 		$sql = "INSERT INTO tbl_users (userid, username, email, password) VALUES ('$userid', '$username', '$email', '$hash')";
 		if ($conn->query($sql) === TRUE) 
 		{
 			header("Location: login.php");
-			echo "<h5 style='text-align:center;color:white'>Registration Successful</h5>";
 		} 
 		else 
 		{
