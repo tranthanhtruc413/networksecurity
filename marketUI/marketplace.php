@@ -67,6 +67,7 @@ if(isset($_POST['store'])){
             <td>ID</td>
             <td>Video ID</td>
             <td>Video Name</td>
+            <td>Uploaded By</td>
             <td>Description</td>
             <td>Date Uploaded</td>
         </tr>
@@ -86,6 +87,7 @@ if(isset($_POST['store'])){
                 echo '<td>'.$id.'</td>';
                 echo '<td>' . $row['videoid'] . '</td>';
                 echo '<td>' . $row['videoname'] . '</td>';
+                echo '<td>' . $row['userid'] . '</td>';
                 echo '<td>' . $row['description'] . '</td>';
                 echo '<td>' . $row['dateupload'] . '</td>';
                 echo '</tr>';

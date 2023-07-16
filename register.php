@@ -147,7 +147,9 @@ if(isset($_POST['Register']))
 		$sql = "INSERT INTO tbl_users (userid, username, email, password) VALUES ('$userid', '$username', '$email', '$hash')";
 		if ($conn->query($sql) === TRUE) 
 		{
-			header("Location: login.php");
+			echo '<script language="javascript">';
+            echo 'window.location.href = "login.php"';
+            echo '</script>';
 		} 
 		else 
 		{

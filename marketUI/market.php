@@ -67,6 +67,7 @@ if(isset($_POST['store'])){
             <td>ID</td>
             <td>Video ID</td>
             <td>Video Name</td>
+            <td>Uploaded By</td>
             <td>Description</td>
             <td>Date Uploaded</td>
             <td>Date Bought</td>
@@ -86,6 +87,7 @@ if(isset($_POST['store'])){
                 echo '<td>'.$id.'</td>';
                 echo '<td>' . $row['videoid'] . '</td>';
                 echo '<td>' . $row['videoname'] . '</td>';
+                echo '<td>' . $row['userid'] . '</td>';
                 echo '<td>' . $row['description'] . '</td>';
                 echo '<td>' . $row['dateupload'] . '</td>';
                 echo '<td>' . $row['buyedtime'] . '</td>';
@@ -207,65 +209,62 @@ function decryptFile($inputFile, $outputFile, $key) {
 
 if(isset($_POST["download"]))
 {
-    $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
-    $userid = $_SESSION['Login'];
-    $videoname = $_POST['videoname'];
-    $sqldown = "SELECT * FROM tbl_videos WHERE videoname='$videoname'";
-    $resultdown = $conn->query($sqldown);
-    if ($resultdown->num_rows > 0) 
-    {
-        while($row = $resultdown->fetch_assoc()) 
-        {
-            $videoid = $row['videoid'];
-        }
-    }
-    else
-    {
-        echo '<script language="javascript">';
-        echo 'alert("Video not found")';
-        echo '</script>';
-        exit();
-    }
-    $data = [
-        'videoid' => $videoid
-    ];
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, 'http://34.126.165.197:5000/api/download');
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_POST, true);
-    curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($curl,CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    $respond = curl_exec($curl);
-    $keyapi = $respond;
-    curl_close($curl);
-    if ($respond === false) {
-        // Handle error
-        echo 'Error accessing the API';
-    exit();
-    }
-    else{
-
-        $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
-        $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
-        $result = $conn->query($sql);
-        $row = $result->fetch_assoc();
-        $location = $row['location'];
-        $info = pathinfo($location);
-        $ext = $info['extension']; // get the extension of the file
-        $inputFile = 'video/encryptedvideo/'.$videoid.'.'.$ext;
-        $outputFile = 'video/decryptedvideo/'.$videoid.'.'.$ext;
-        $keyapi = base64_decode($keyapi);
-        $cipher = "aes-128-gcm";
-        $tag_length = 16;
-        $iv_len = openssl_cipher_iv_length($cipher);
-        $iv = substr($keyapi, 0, $iv_len);
-        $ciphertext = substr($keyapi, $iv_len, -$tag_length);
-        $tag = substr($keyapi, -$tag_length);
-        $aeskey =bin2hex($userid);
-        $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
-        decryptFile($inputFile, $outputFile, $key);
-        $location = "".$videoid.'.'.$ext;
-        header("Location: decryptedvideo.php?query=".urlencode(base64_encode($location))."&vid=".urlencode(base64_encode($videoid))."");
-    }
-}
+   $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
+   $userid = $_SESSION['Login'];
+   $videoname = $_POST['videoname'];
+   $sqldown = "SELECT * FROM tbl_videos WHERE videoname='$videoname'";
+   $resultdown = $conn->query($sqldown);
+   if ($resultdown->num_rows > 0) 
+   {
+       while($row = $resultdown->fetch_assoc()) 
+       {
+           $videoid = $row['videoid'];
+       }
+   }
+   else
+   {
+       echo '<script language="javascript">';
+       echo 'alert("Video not found")';
+       echo '</script>';
+       exit();
+   }
+   $sqlcheck = "SELECT * FROM tbl_keys WHERE videoid='$videoid'";
+   $resultcheck = $conn->query($sqlcheck);
+   if ($resultcheck->num_rows > 0) 
+   {
+       while($row = $resultcheck->fetch_assoc()) 
+       {
+           $keyapi = $row['ckey'];
+           $userid = $row['userid'];
+       }
+       $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
+       $result = $conn->query($sql);
+       $row = $result->fetch_assoc();
+       $location = $row['location'];
+       $info = pathinfo($location);
+       $ext = $info['extension']; // get the extension of the file
+       $inputFile = 'video/encryptedvideo/'.$videoid.'.'.$ext;
+       $outputFile = 'video/decryptedvideo/'.$videoid.'.'.$ext;
+       $keyapi = base64_decode($keyapi);
+       $cipher = "aes-128-gcm";
+       $tag_length = 16;
+       $iv_len = openssl_cipher_iv_length($cipher);
+       $iv = substr($keyapi, 0, $iv_len);
+       $ciphertext = substr($keyapi, $iv_len, -$tag_length);
+       $tag = substr($keyapi, -$tag_length);
+       $aeskey =bin2hex($userid);
+       $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
+       $key = generateKey(1000);
+       decryptFile($inputFile, $outputFile, $key);
+       $location = "".$videoid.'.'.$ext;
+       header("Location: decryptedvideo.php?query=".urlencode(base64_encode($location))."&vid=".urlencode(base64_encode($videoid))."");
+   }
+   else
+   {
+       echo '<script language="javascript">';
+       echo 'alert("Video not found")';
+       echo '</script>';
+       exit();
+   }
+   }
 ?>

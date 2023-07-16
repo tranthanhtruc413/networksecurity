@@ -280,32 +280,14 @@ if(isset($_POST["upload"]))
                      {
                         $market = "INSERT INTO tbl_market (videoid,userid) VALUES ('$videoid','$userid')";
                         $exec = $conn->query($market);
-                        $data = [
-                            'videoid' => $videoid,
-                            'key' => $ciphertext
-                        ];
-                        $curl = curl_init();
-                        curl_setopt($curl, CURLOPT_URL, 'http://34.126.165.197:5000/api/key');
-                        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($curl, CURLOPT_POST, true);
-                        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-                        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                        $respond = curl_exec($curl);
-                        curl_close($curl);
-                        if ($respond === false) {
-                            // Handle error
-                            echo 'Error accessing the API';
-                        exit();
-                        }
-                        else {
-                            echo '<script language="javascript">';
-                            echo 'alert("Congratulations! File Uploaded Successfully.")';
-                            echo '</script>';
-                            echo '<script language="javascript">';
-                            echo 'window.location.href = "upload.php"';
-                            echo '</script>';
-                        }
-                        
+                        $ckey = "INSERT INTO tbl_keys (videoid,userid,ckey) VALUES ('$videoid','$userid','$ciphertext')";
+                        $exec = $conn->query($ckey);
+                        echo '<script language="javascript">';
+                        echo 'alert("Congratulations! File Uploaded Successfully.")';
+                        echo '</script>';
+                        echo '<script language="javascript">';
+                        echo 'window.location.href = "upload.php"';
+                        echo '</script>';
                      } 
                      else 
                      {
@@ -353,26 +335,15 @@ if(isset($_POST["download"]))
         echo '</script>';
         exit();
     }
-    $data = [
-        'videoid' => $videoid
-    ];
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, 'http://34.126.165.197:5000/api/download');
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_POST, true);
-    curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($curl,CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    $respond = curl_exec($curl);
-    $keyapi = $respond;
-    curl_close($curl);
-    if ($respond === false) {
-        // Handle error
-        echo 'Error accessing the API';
-    exit();
-    }
-    else{
-
-        $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
+    $sqlcheck = "SELECT * FROM tbl_keys WHERE videoid='$videoid'";
+    $resultcheck = $conn->query($sqlcheck);
+    if ($resultcheck->num_rows > 0) 
+    {
+        while($row = $resultcheck->fetch_assoc()) 
+        {
+            $keyapi = $row['ckey'];
+            $userid = $row['userid'];
+        }
         $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
         $result = $conn->query($sql);
         $row = $result->fetch_assoc();
@@ -394,5 +365,12 @@ if(isset($_POST["download"]))
         $location = "".$videoid.'.'.$ext;
         header("Location: marketUI/decryptedvideo.php?query=".urlencode(base64_encode($location))."&vid=".urlencode(base64_encode($videoid))."");
     }
-}
+    else
+    {
+        echo '<script language="javascript">';
+        echo 'alert("Video not found")';
+        echo '</script>';
+        exit();
+    }
+    }
 ?>
