@@ -278,6 +278,8 @@ if(isset($_POST["upload"]))
                      $sql = "INSERT INTO tbl_videos (videoid, videoname, description, userid,location) VALUES ('$videoid', '$videoname', '$description', '$userid','$check')";
                      if ($conn->query($sql) === TRUE) 
                      {
+                        $market = "INSERT INTO tbl_market (videoid,userid) VALUES ('$videoid','$userid')";
+                        $exec = $conn->query($market);
                         $data = [
                             'videoid' => $videoid,
                             'key' => $ciphertext
@@ -390,7 +392,7 @@ if(isset($_POST["download"]))
         $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
         decryptFile($inputFile, $outputFile, $key);
         $location = "".$videoid.'.'.$ext;
-        header("Location: marketUI/decryptedvideo.php?filename=".urlencode($location));
+        header("Location: marketUI/decryptedvideo.php?query=".urlencode(base64_encode($location))."&id=".urlencode(base64_encode($userid)).""."&vid=".urlencode(base64_encode($videoid))."");
     }
 }
 ?>
