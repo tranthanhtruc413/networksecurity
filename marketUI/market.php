@@ -80,7 +80,7 @@ if(isset($_POST['store'])){
                 echo "Unable to connect to MySQL! " . mysqli_connect_error();
             }
             $id = 1;
-            $sql = "SELECT tbl_videos.videoid,videoname,DATE_FORMAT(dateupload, '%H:%i:%s %e/%m/%Y') as dateupload,description,DATE_FORMAT(buyedtime, '%H:%i:%s %e/%m/%Y') as buyedtime FROM tbl_videos,tbl_market where tbl_videos.videoid = tbl_market.videoid and tbl_market.userid = '".$_SESSION['Login']."'";
+            $sql = "SELECT tbl_market.userid,tbl_videos.videoid,videoname,DATE_FORMAT(dateupload, '%H:%i:%s %e/%m/%Y') as dateupload,description,DATE_FORMAT(buyedtime, '%H:%i:%s %e/%m/%Y') as buyedtime FROM tbl_videos,tbl_market where tbl_videos.videoid = tbl_market.videoid and tbl_market.userid = '".$_SESSION['Login']."'";
             $result = mysqli_query($conn, $sql);
             while ($row = mysqli_fetch_array($result)) {
                 echo '<tr>';
