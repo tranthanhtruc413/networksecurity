@@ -171,29 +171,23 @@ function rand_float($st_num=0,$end_num=1,$mul=1000000)
 if ($st_num>$end_num) return false;
 return mt_rand($st_num*$mul,$end_num*$mul)/$mul;
 }
-function aesencrypt($plaintext, $key)
+function encryptAES($text, $key)
 {
-    $cipher = 'aes-256-gcm';
-    $ivlen = openssl_cipher_iv_length($cipher);
-    $iv = openssl_random_pseudo_bytes($ivlen);
     $tag = null;
-    $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return base64_encode($ciphertext);
+    $ivSize = openssl_cipher_iv_length('aes-256-gcm');
+    $iv = openssl_random_pseudo_bytes($ivSize);
+    $encrypted = openssl_encrypt($text, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+    return base64_encode($iv . $encrypted);
 }
-function aesdecrypt($encryptedText, $key)
+
+function decryptAES($text, $key)
 {
-    $cipher = 'aes-256-gcm';
-    $ivlen = 12; // IV length for AES-256-GCM is 12 bytes
-    $c = base64_decode($encryptedText);
-    $iv = substr($c, 0, $ivlen);
-    $tag = substr($c, $ivlen, 16);
-    $ciphertext = substr($c, $ivlen + 16);
-    $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return $plaintext;
-
-    return $plaintext;
+    $tag = null;
+    $text = base64_decode($text);
+    $ivSize = openssl_cipher_iv_length('aes-256-gcm');
+    $iv = substr($text, 0, $ivSize);
+    $encrypted = substr($text, $ivSize);
+    return openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv,  $tag);
 }
 
 if(isset($_POST["upload"]))
@@ -266,12 +260,12 @@ if(isset($_POST["upload"]))
                      $sql = "INSERT INTO tbl_videos (videoid, videoname, description, userid,location) VALUES ('$videoid', '$videoname', '$description', '$userid','$check')";
                      if ($conn->query($sql) === TRUE) 
                      {
-                        $key =aesencrypt($keystring, $userid);
+                        $cipherText = encryptAES($keystring, $userid);
                         $data = [
                             'videoid' => $videoid,
-                            'key' => $key
+                            'key' => $cipherText
+
                         ];
-                        //echo aesdecrypt($key, $userid);
                         $curl = curl_init();
                         curl_setopt($curl, CURLOPT_URL, 'http://34.126.165.197:5000/api/key');
                         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -288,6 +282,9 @@ if(isset($_POST["upload"]))
                         else {
                             echo '<script language="javascript">';
                             echo 'alert("Congratulations! File Uploaded Successfully.")';
+                            echo '</script>';
+                            echo '<script language="javascript">';
+                            echo 'window.location.href = "upload.php"';
                             echo '</script>';
                         }
                         
@@ -318,7 +315,6 @@ if(isset($_POST["upload"]))
 
 if(isset($_POST["download"]))
 {
-    echo OPENSSL_VERSION_TEXT;
     $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
     $videoname = $_POST['videoname'];
     $sqldown = "SELECT * FROM tbl_videos WHERE videoname='$videoname'";
@@ -347,8 +343,7 @@ if(isset($_POST["download"]))
     curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($curl,CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     $respond = curl_exec($curl);
-    $keyapi = json_decode($respond, true);
-    echo $keyapi;
+    $keyapi = $respond;
     curl_close($curl);
     if ($respond === false) {
         // Handle error
@@ -357,7 +352,14 @@ if(isset($_POST["download"]))
     }
     else{
         $userid = $_SESSION['Login'];
-        $key = aesdecrypt($keyapi, $userid);
+        $key = $userid;
+        $tag = null;
+        $text = base64_decode($keyapi);
+        $ivSize = openssl_cipher_iv_length('aes-256-gcm');
+        $iv = substr($text, 0, $ivSize);
+        $encrypted = substr($text, $ivSize);
+        $keystring = openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+        echo $keystring;
         $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
         $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
         $result = $conn->query($sql);
@@ -367,7 +369,7 @@ if(isset($_POST["download"]))
         $ext = $info['extension']; // get the extension of the file
         $inputFile = 'marketUI/video/encryptedvideo/'.$videoid.'.'.$ext;
         $outputFile = 'marketUI/video/decryptedvideo/'.$videoid.'.'.$ext;
-        decryptFileChunk($inputFile, $outputFile, $key);
+        decryptFileChunk($inputFile, $outputFile, $keystring);
         $file = $outputFile;
         $filename = basename($file);
         header("Content-Type: application/octet-stream");
