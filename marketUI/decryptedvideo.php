@@ -37,12 +37,11 @@ li a:hover:not(.active) {
 <?php session_start();
 if(!isset($_SESSION['Login'])) // If session is not set then redirect to Login Page
 {
-    header("Location:login.php");  
+    header("Location:../login.php");  
 }
 $video = urldecode($_GET['query']);
 $video = base64_decode($video);
-$id = urldecode($_GET['id']);
-$id = base64_decode($id);
+$id = $_SESSION['Login'];
 $videoid = urldecode($_GET['vid']);
 $videoid = base64_decode($videoid);
 $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
@@ -50,8 +49,7 @@ $sql = "SELECT * FROM tbl_market WHERE userid = '$id' and videoid = '$videoid'";
 $result = mysqli_query($conn,$sql);
 if (mysqli_fetch_array($result) == 0)
 {
-  console.log($videoid);
-  console.log($id);
+  unlink("video/decryptedvideo/$video"); 
   echo '<script language="javascript">';
   echo 'alert("You do not have permision to view this file!")';
   echo '</script>';

@@ -58,7 +58,7 @@ if(isset($_POST['logout'])){
         </div>
         <button type="submit" name="back" class="btn"><i class="fa fa-upload fw-fa"></i>Go Back</button>
         <button type="submit" name="upload" class="btn" id="upload"><i class="fa fa-upload fw-fa"></i> Upload to the Market</button>
-        <button type="submit" name="download" class="btn"><i class="fa fa-download fw-fa" ></i>Download</button>
+        <button type="submit" name="download" class="btn"><i class="fa fa-download fw-fa" ></i>Watch</button>
         <button type="submit" name="logout" class="btn"><i class="fa fa-download fw-fa" ></i>Logout</button>
     </form>
 </center>
@@ -392,7 +392,7 @@ if(isset($_POST["download"]))
         $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
         decryptFile($inputFile, $outputFile, $key);
         $location = "".$videoid.'.'.$ext;
-        header("Location: marketUI/decryptedvideo.php?query=".urlencode(base64_encode($location))."&id=".urlencode(base64_encode($userid)).""."&vid=".urlencode(base64_encode($videoid))."");
+        header("Location: marketUI/decryptedvideo.php?query=".urlencode(base64_encode($location))."&vid=".urlencode(base64_encode($videoid))."");
     }
 }
 ?>

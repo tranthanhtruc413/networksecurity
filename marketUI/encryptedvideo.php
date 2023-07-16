@@ -2,9 +2,9 @@
  session_start();
 if(!isset($_SESSION['Login'])) // If session is not set then redirect to Login Page
 {
-    header("Location:login.php"); 
+    header("Location:../login.php"); 
 }
-$video = urldecode($_GET['filenameen']); 
+//$video = urldecode($_GET['filenameen']); 
 ?>
 
 
