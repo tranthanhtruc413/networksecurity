@@ -1,3 +1,13 @@
+<?php
+ session_start();
+if(!isset($_SESSION['Login'])) // If session is not set then redirect to Login Page
+{
+    header("Location:login.php"); 
+}
+$video = urldecode($_GET['filenameen']); 
+?>
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,7 +52,7 @@ li a:hover:not(.active) {
     </ul>
     <div class="video-container" style =" transform: translate(-50%, -50%);position: absolute;top: 50%;left: 50%;display: flex;justify-content: center;">
         <video id="video-player" controls>
-            <source src="video/encryptedvideo/test.mp4" type="video/mp4">
+            <source src="video/encryptedvideo/<?php echo $video ?>" type="video/mp4">
         </video>
     </div>
 </body>

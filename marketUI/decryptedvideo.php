@@ -3,6 +3,7 @@
 <head>
     <title>Video Player</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+
 </head>
 <style>
 ul {
@@ -33,7 +34,13 @@ li a:hover:not(.active) {
   background-color: #04AA6D;
 }
 </style>
-
+<?php session_start();
+if(!isset($_SESSION['Login'])) // If session is not set then redirect to Login Page
+{
+    header("Location:login.php");  
+}
+$video = urldecode($_GET['filename']);
+?>
 <body>
     <ul>
         <li><a href="./market.php">Back</a></li>
@@ -42,7 +49,7 @@ li a:hover:not(.active) {
     </ul>
     <div class="video-container" style =" transform: translate(-50%, -50%);position: absolute;top: 50%;left: 50%;display: flex;justify-content: center;">
         <video id="video-player" controls>
-            <source src="video/decryptedvideo/video.mp4" type="video/mp4">
+            <source src="video/decryptedvideo/<?php echo $video ?>" type="video/mp4">
         </video>
     </div>
 </body>

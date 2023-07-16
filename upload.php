@@ -112,84 +112,98 @@ if(isset($_POST['logout'])){
 </body>
 </html>
 <?php 
-function logisticMap($x, $r) {
-    return $r * $x * (1 - $x);
+function aesencrypt($plaintext, $key)
+{
+    $cipher = 'aes-256-gcm';
+    $ivlen = openssl_cipher_iv_length($cipher);
+    $iv = openssl_random_pseudo_bytes($ivlen);
+    $tag = null;
+    $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+    return $ciphertext;
+}
+function aesdecrypt($encryptedText, $key)
+{
+    $cipher = 'aes-256-gcm';
+    $ivlen = 12; // IV length for AES-256-GCM is 12 bytes
+    $c = $encryptedText;
+    $iv = substr($c, 0, $ivlen);
+    $tag = substr($c, $ivlen, 16);
+    $ciphertext = substr($c, $ivlen + 16);
+    $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+    return $plaintext;
+}
+// Hyperchaotic map function
+function chuaMap($x, $y, $z, $a, $b, $c, $d) {
+    $x_dot = $a * ($y - $x - $b * $x * $x - $c * $x * $y - $d * $x * $z);
+    $y_dot = $x * (1 - $c * $x - $d * $x * $x - $y);
+    $z_dot = $x * ($y - $z);
+    return array($x_dot, $y_dot, $z_dot);
 }
 
-function generateKey($length, $seed, $r) {
-    $key = [];
-    $x = $seed;
+// Generate the key
+function generateKey($length) {
+    $key = "";
+    $x0 = 0.1;
+    $y0 = 0.2;
+    $z0 = 0.3;
+    $a = 15.6;
+    $b = 1;
+    $c = 28;
+    $d = 0.05;
 
     for ($i = 0; $i < $length; $i++) {
-        $x = logisticMap($x, $r);
-        $key[] = $x;
+        list($x0, $y0, $z0) = chuaMap($x0, $y0, $z0, $a, $b, $c, $d);
+        $key .= chr(floor(($x0 + $y0 + $z0) * 255) % 256);
     }
 
     return $key;
 }
 
-function encryptFileChunk($inputFile, $outputFile, $key) {
+// Encrypt file
+function encryptFile($inputFile, $outputFile, $key) {
     $input = fopen($inputFile, 'rb');
     $output = fopen($outputFile, 'wb');
+    $keyLength = strlen($key);
 
     while (!feof($input)) {
-        $data = fread($input, 8192);
-        $encryptedData = '';
+        $plaintext = fread($input, 8192);
+        $ciphertext = '';
 
-        for ($i = 0; $i < strlen($data); $i++) {
-            $encryptedData .= chr(ord($data[$i]) ^ intval($key[$i % count($key)] * 255));
+        $plaintextLength = strlen($plaintext);
+        for ($i = 0; $i < $plaintextLength; $i++) {
+            $ciphertext .= chr((ord($plaintext[$i]) + ord($key[$i % $keyLength])) % 256);
         }
 
-        fwrite($output, $encryptedData);
+        fwrite($output, $ciphertext);
     }
 
     fclose($input);
     fclose($output);
 }
 
-function decryptFileChunk($inputFile, $outputFile, $key) {
+// Decrypt file
+function decryptFile($inputFile, $outputFile, $key) {
     $input = fopen($inputFile, 'rb');
     $output = fopen($outputFile, 'wb');
+    $keyLength = strlen($key);
 
     while (!feof($input)) {
-        $data = fread($input, 8192);
-        $decryptedData = '';
+        $ciphertext = fread($input, 8192);
+        $plaintext = '';
 
-        for ($i = 0; $i < strlen($data); $i++) {
-            $decryptedData .= chr(ord($data[$i]) ^ intval($key[$i % count($key)] * 255));
+        $ciphertextLength = strlen($ciphertext);
+        for ($i = 0; $i < $ciphertextLength; $i++) {
+            $plaintext .= chr((ord($ciphertext[$i]) - ord($key[$i % $keyLength]) + 256) % 256);
         }
 
-        fwrite($output, $decryptedData);
+        fwrite($output, $plaintext);
     }
 
     fclose($input);
     fclose($output);
 }
-
-function rand_float($st_num=0,$end_num=1,$mul=1000000)
-{
-if ($st_num>$end_num) return false;
-return mt_rand($st_num*$mul,$end_num*$mul)/$mul;
-}
-function encryptAES($text, $key)
-{
-    $tag = null;
-    $ivSize = openssl_cipher_iv_length('aes-256-gcm');
-    $iv = openssl_random_pseudo_bytes($ivSize);
-    $encrypted = openssl_encrypt($text, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
-    return base64_encode($iv . $encrypted);
-}
-
-function decryptAES($text, $key)
-{
-    $tag = null;
-    $text = base64_decode($text);
-    $ivSize = openssl_cipher_iv_length('aes-256-gcm');
-    $iv = substr($text, 0, $ivSize);
-    $encrypted = substr($text, $ivSize);
-    return openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv,  $tag);
-}
-
 if(isset($_POST["upload"]))
 {
             $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
@@ -244,34 +258,36 @@ if(isset($_POST["upload"]))
                 }
                 else
                 {
-                    $keyLength = 256;  // Key length in bytes
-                    $seed =0.1; // Initial seed value
-                    $r = 3.0;  // Chaotic map parameter      
-                    $key = generateKey($keyLength, $seed, $r);
                     $info = pathinfo($_FILES['file']['name']);
                     $ext = $info['extension']; // get the extension of the file
                     $inputFile = $_FILES['file']['tmp_name'];
                     $outputFile = 'marketUI/video/encryptedvideo/'.$videoid.'.'.$ext;
                 // Check if file already exists
-                    encryptFileChunk($inputFile, $outputFile, $key);
-                    $keystring = implode($key);
+                    $key = generateKey(1000);
+                    encryptFile($inputFile, $outputFile, $key);
+                    $cipher = "aes-128-gcm";
+                    $iv_len = openssl_cipher_iv_length($cipher);
+                    $iv = openssl_random_pseudo_bytes($iv_len);
+                    $tag = ""; // Will be populated after encryption
+                    $tag_length = 16;
+                    $aeskey = bin2hex($userid);
+                    $ciphertext = openssl_encrypt($key, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
+                    $ciphertext = base64_encode($iv.$ciphertext.$tag);
                 // Using echo statement
                     move_uploaded_file($_FILES['file']['name'],$outputFile);
                      $sql = "INSERT INTO tbl_videos (videoid, videoname, description, userid,location) VALUES ('$videoid', '$videoname', '$description', '$userid','$check')";
                      if ($conn->query($sql) === TRUE) 
                      {
-                        $cipherText = encryptAES($keystring, $userid);
                         $data = [
                             'videoid' => $videoid,
-                            'key' => $cipherText
-
+                            'key' => $ciphertext
                         ];
                         $curl = curl_init();
                         curl_setopt($curl, CURLOPT_URL, 'http://34.126.165.197:5000/api/key');
                         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
                         curl_setopt($curl, CURLOPT_POST, true);
                         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-                        curl_setopt($curl,CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         $respond = curl_exec($curl);
                         curl_close($curl);
                         if ($respond === false) {
@@ -311,11 +327,13 @@ if(isset($_POST["upload"]))
                     echo '</script>';
                 }
             }
+            
 }
 
 if(isset($_POST["download"]))
 {
     $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
+    $userid = $_SESSION['Login'];
     $videoname = $_POST['videoname'];
     $sqldown = "SELECT * FROM tbl_videos WHERE videoname='$videoname'";
     $resultdown = $conn->query($sqldown);
@@ -351,15 +369,7 @@ if(isset($_POST["download"]))
     exit();
     }
     else{
-        $userid = $_SESSION['Login'];
-        $key = $userid;
-        $tag = null;
-        $text = base64_decode($keyapi);
-        $ivSize = openssl_cipher_iv_length('aes-256-gcm');
-        $iv = substr($text, 0, $ivSize);
-        $encrypted = substr($text, $ivSize);
-        $keystring = openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
-        echo $keystring;
+
         $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
         $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
         $result = $conn->query($sql);
@@ -369,14 +379,18 @@ if(isset($_POST["download"]))
         $ext = $info['extension']; // get the extension of the file
         $inputFile = 'marketUI/video/encryptedvideo/'.$videoid.'.'.$ext;
         $outputFile = 'marketUI/video/decryptedvideo/'.$videoid.'.'.$ext;
-        decryptFileChunk($inputFile, $outputFile, $keystring);
-        $file = $outputFile;
-        $filename = basename($file);
-        header("Content-Type: application/octet-stream");
-        header("Content-Disposition: attachment; filename=$filename");
-        header("Content-Length: " . filesize($file));
-        readfile($file);
-        exit();
+        $keyapi = base64_decode($keyapi);
+        $cipher = "aes-128-gcm";
+        $tag_length = 16;
+        $iv_len = openssl_cipher_iv_length($cipher);
+        $iv = substr($keyapi, 0, $iv_len);
+        $ciphertext = substr($keyapi, $iv_len, -$tag_length);
+        $tag = substr($keyapi, -$tag_length);
+        $aeskey =bin2hex($userid);
+        $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
+        decryptFile($inputFile, $outputFile, $key);
+        $location = "".$videoid.'.'.$ext;
+        header("Location: marketUI/decryptedvideo.php?filename=".urlencode($location));
     }
 }
 ?>
