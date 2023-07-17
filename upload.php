@@ -112,28 +112,6 @@ if(isset($_POST['logout'])){
 </body>
 </html>
 <?php 
-function aesencrypt($plaintext, $key)
-{
-    $cipher = 'aes-256-gcm';
-    $ivlen = openssl_cipher_iv_length($cipher);
-    $iv = openssl_random_pseudo_bytes($ivlen);
-    $tag = null;
-    $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return $ciphertext;
-}
-function aesdecrypt($encryptedText, $key)
-{
-    $cipher = 'aes-256-gcm';
-    $ivlen = 12; // IV length for AES-256-GCM is 12 bytes
-    $c = $encryptedText;
-    $iv = substr($c, 0, $ivlen);
-    $tag = substr($c, $ivlen, 16);
-    $ciphertext = substr($c, $ivlen + 16);
-    $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return $plaintext;
-}
 // Hyperchaotic map function
 function chuaMap($x, $y, $z, $a, $b, $c, $d) {
     $x_dot = $a * ($y - $x - $b * $x * $x - $c * $x * $y - $d * $x * $z);

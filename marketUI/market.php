@@ -67,7 +67,6 @@ if(isset($_POST['store'])){
             <td>ID</td>
             <td>Video ID</td>
             <td>Video Name</td>
-            <td>Uploaded By</td>
             <td>Description</td>
             <td>Date Uploaded</td>
             <td>Date Bought</td>
@@ -80,14 +79,13 @@ if(isset($_POST['store'])){
                 echo "Unable to connect to MySQL! " . mysqli_connect_error();
             }
             $id = 1;
-            $sql = "SELECT tbl_market.userid,tbl_videos.videoid,videoname,DATE_FORMAT(dateupload, '%H:%i:%s %e/%m/%Y') as dateupload,description,DATE_FORMAT(buyedtime, '%H:%i:%s %e/%m/%Y') as buyedtime FROM tbl_videos,tbl_market where tbl_videos.videoid = tbl_market.videoid and tbl_market.userid = '".$_SESSION['Login']."'";
+            $sql = "SELECT tbl_videos.videoid,videoname,DATE_FORMAT(dateupload, '%H:%i:%s %e/%m/%Y') as dateupload,description,DATE_FORMAT(buyedtime, '%H:%i:%s %e/%m/%Y') as buyedtime FROM tbl_videos,tbl_market where tbl_videos.videoid = tbl_market.videoid and tbl_market.userid = '".$_SESSION['Login']."'";
             $result = mysqli_query($conn, $sql);
             while ($row = mysqli_fetch_array($result)) {
                 echo '<tr>';
                 echo '<td>'.$id.'</td>';
                 echo '<td>' . $row['videoid'] . '</td>';
                 echo '<td>' . $row['videoname'] . '</td>';
-                echo '<td>' . $row['userid'] . '</td>';
                 echo '<td>' . $row['description'] . '</td>';
                 echo '<td>' . $row['dateupload'] . '</td>';
                 echo '<td>' . $row['buyedtime'] . '</td>';
@@ -113,28 +111,6 @@ if(isset($_POST['store'])){
 </body>
 </html>
 <?php 
-function aesencrypt($plaintext, $key)
-{
-    $cipher = 'aes-256-gcm';
-    $ivlen = openssl_cipher_iv_length($cipher);
-    $iv = openssl_random_pseudo_bytes($ivlen);
-    $tag = null;
-    $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return $ciphertext;
-}
-function aesdecrypt($encryptedText, $key)
-{
-    $cipher = 'aes-256-gcm';
-    $ivlen = 12; // IV length for AES-256-GCM is 12 bytes
-    $c = $encryptedText;
-    $iv = substr($c, 0, $ivlen);
-    $tag = substr($c, $ivlen, 16);
-    $ciphertext = substr($c, $ivlen + 16);
-    $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-    return $plaintext;
-}
 // Hyperchaotic map function
 function chuaMap($x, $y, $z, $a, $b, $c, $d) {
     $x_dot = $a * ($y - $x - $b * $x * $x - $c * $x * $y - $d * $x * $z);
@@ -254,7 +230,7 @@ if(isset($_POST["download"]))
        $tag = substr($keyapi, -$tag_length);
        $aeskey =bin2hex($userid);
        $key = openssl_decrypt($ciphertext, $cipher, $aeskey, OPENSSL_RAW_DATA, $iv, $tag, $tag_length);
-       $key = generateKey(1000);
+       //$key = generateKey(1000);
        decryptFile($inputFile, $outputFile, $key);
        $location = "".$videoid.'.'.$ext;
        header("Location: decryptedvideo.php?query=".urlencode(base64_encode($location))."&vid=".urlencode(base64_encode($videoid))."");
