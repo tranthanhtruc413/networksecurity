@@ -4,7 +4,7 @@ if(!isset($_SESSION['Login'])) // If session is not set then redirect to Login P
 {
     header("Location:../login.php"); 
 }
-//$video = urldecode($_GET['filenameen']); 
+$video = urldecode($_GET['filenameen']); 
 ?>
 
 

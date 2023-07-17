@@ -55,6 +55,7 @@ if(isset($_POST['store'])){
         <input type="text" name="videoname"> <br/>
         <button type="submit" name="back" class="btn"><i class="fa fa-upload fw-fa"></i>Go Back</button>
         <button type="submit" name="store" class="btn"><i class="fa fa-upload fw-fa"></i>Video Market</button>
+        <button type="submit" name="envid" class="btn"><i class="fa fa-upload fw-fa"></i>Encrypted Video</button>
         <button type="submit" name="download" class="btn"><i class="fa fa-download fw-fa" ></i>Watch</button>
         <button type="submit" name="logout" class="btn"><i class="fa fa-download fw-fa" ></i>Logout</button>
     </form>
@@ -242,5 +243,27 @@ if(isset($_POST["download"]))
        echo '</script>';
        exit();
    }
+   }
+   if(isset($_POST["envid"]))
+   {
+    $conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
+    $userid = $_SESSION['Login'];
+    $videoname = $_POST['videoname'];
+    $sqldown = "SELECT * FROM tbl_videos WHERE videoname='$videoname'";
+    $resultdown = $conn->query($sqldown);
+    if ($resultdown->num_rows > 0) 
+    {
+        while($row = $resultdown->fetch_assoc()) 
+        {
+            $videoid = $row['videoid'];
+        }
+    }
+    $sql = "SELECT location FROM tbl_videos WHERE videoid='$videoid'";
+       $result = $conn->query($sql);
+       $row = $result->fetch_assoc();
+       $location = $row['location'];
+       $info = pathinfo($location);
+       $location = "".$videoid.'.'.$ext;
+       header("Location: encryptedvideo.php?filenameen=".urlencode(base64_encode($location)));
    }
 ?>

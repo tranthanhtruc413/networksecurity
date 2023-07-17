@@ -7,7 +7,12 @@ if (isset($_POST['Login']))
 {
     $username = $_POST['username'];
     $password = $_POST['password'];
-	$hash = hash('sha256',$password);
+	if ($username=="" && $password=="")
+	{
+		echo "<script>alert('Please enter username and password')</script>";
+	}
+	else{
+		$hash = hash('sha256',$password);
 	$conn = mysqli_connect("tttruc.ddns.net","admin","admin","netsec",3306);
 	if ($conn->connect_error) 
 	{
@@ -27,6 +32,7 @@ if (isset($_POST['Login']))
     {
         $error = 'Invalid username or password';
     }
+	}
 }
 ?>
 <!DOCTYPE html>
