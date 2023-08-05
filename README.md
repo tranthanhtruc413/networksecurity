@@ -1,5 +1,7 @@
 # networksecurity
-# Chaotic Files(images, video, .doc,.txt,.pdf....etc) Encryption using Chaotic Map Encryption
+## Video Encoding Using Chaotic Map and AES
+### Trần Thanh Trực
+### Huỳnh Hữu Thắng
 
 
 I. Implementation
